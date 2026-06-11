@@ -142,7 +142,7 @@ NODE_REGISTRY_URL=https://registry.yourdomain.com
 | frpc | — | FRP 客户端，暴露 SSH 到 VPS |
 | easytier | — | P2P mesh，提供备用管理 IP |
 | tailscaled | — | Tailscale VPN，主管理通道 |
-| mihomo | 7893/1053 | TProxy 透明代理与 DNS 劫持 |
+| mihomo | 7893/1053/9090 | TProxy 透明代理、DNS 劫持与控制端口 |
 | prometheus-node-exporter | 9100 | 指标采集（仅 Tailscale 可达） |
 | ufw | — | 防火墙，开机自动配置（日志默认关闭） |
 | fail2ban | — | SSH 暴力破解防护 |

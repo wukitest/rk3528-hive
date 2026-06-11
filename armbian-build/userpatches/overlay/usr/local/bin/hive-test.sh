@@ -125,7 +125,7 @@ fi
 
 # ── 8. Mihomo TProxy ─────────────────────────────────────────────────────────
 if svc_active mihomo; then
-    if ss -lntup 2>/dev/null | grep -Eq ":(7890|7893|1053)[[:space:]]"; then
+    if ss -lntup 2>/dev/null | grep -Eq ":(7890|7893|1053|9090)[[:space:]]"; then
         pass "mihomo" "service active, proxy/dns ports listening"
     else
         warn "mihomo" "running but expected ports not detected"

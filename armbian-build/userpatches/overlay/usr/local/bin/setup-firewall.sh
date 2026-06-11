@@ -123,22 +123,31 @@ ensure_ufw_before_input_rule() {
     local tmp
 
     [ -f "$file" ] || return 0
-    grep -Fxq -- "$rule" "$file" && return 0
 
-    if grep -q '^COMMIT$' "$file"; then
-        tmp="$(mktemp)"
-        awk -v rule="$rule" '
-            !inserted && $0 == "COMMIT" {
+    tmp="$(mktemp)"
+    awk -v rule="$rule" '
+        $0 == rule {
+            next
+        }
+        !inserted && $0 == "-A ufw-before-input -j ufw-not-local" {
+            print rule
+            inserted = 1
+        }
+        !inserted && $0 == "COMMIT" {
+            print rule
+            inserted = 1
+        }
+        {
+            print
+        }
+        END {
+            if (!inserted) {
                 print rule
-                inserted = 1
             }
-            { print }
-        ' "$file" > "$tmp"
-        cat "$tmp" > "$file"
-        rm -f "$tmp"
-    else
-        printf '%s\n' "$rule" >> "$file"
-    fi
+        }
+    ' "$file" > "$tmp"
+    cat "$tmp" > "$file"
+    rm -f "$tmp"
 }
 
 MIHOMO_LAN="$(detect_local_subnet || true)"
@@ -147,8 +156,11 @@ MIHOMO_MARK="0x1ed4"
 echo "配置 Mihomo TProxy 入站放行..."
 ensure_ufw_before_input_rule "-A ufw-before-input -m mark --mark ${MIHOMO_MARK} -j ACCEPT"
 if [ -n "$MIHOMO_LAN" ]; then
+    ufw allow proto tcp from "$MIHOMO_LAN" to any port 7893 comment 'Mihomo TProxy TCP - LAN'
+    ufw allow proto udp from "$MIHOMO_LAN" to any port 7893 comment 'Mihomo TProxy UDP - LAN'
     ufw allow proto tcp from "$MIHOMO_LAN" to any port 1053 comment 'Mihomo DNS TCP - LAN'
     ufw allow proto udp from "$MIHOMO_LAN" to any port 1053 comment 'Mihomo DNS UDP - LAN'
+    ufw allow proto tcp from "$MIHOMO_LAN" to any port 9090 comment 'Mihomo Controller - LAN'
 else
     echo "  未检测到本机 IPv4 网段，跳过 Mihomo IPv4 入站放行"
 fi
@@ -254,7 +266,7 @@ echo ""
 echo "📋 开放的端口："
 echo "  - SSH (22): 本地网络 + Tailscale"
 echo "  - Node Exporter (9100): 仅 Tailscale"
-echo "  - Mihomo TProxy mark (${MIHOMO_MARK}) / DNS (1053): ${MIHOMO_LAN}"
+echo "  - Mihomo TProxy (7893, mark ${MIHOMO_MARK}) / DNS (1053) / Controller (9090): ${MIHOMO_LAN}"
 echo "  - 出站: DNS, NTP, HTTPS, CF Tunnel(7844,443), CF WARP(2408,1701), Tailscale, FRP($FRP_PORT)"
 echo ""
 echo "🔐 安全特性："
