@@ -14,13 +14,12 @@ echo ">>> customize-image.sh: RELEASE=${RELEASE} ARCH=${ARCH}"
 # ─────────────────────────────────────────────
 echo ">>> Copying overlay files to root..."
 if [ -d "/tmp/overlay" ]; then
-    cp -a --no-preserve=ownership /tmp/overlay/. / 2>/dev/null || true
-    # overlay 来自构建主机，确保根目录和 overlay 涉及路径不会保留宿主 UID/GID。
-    chown root:root /etc /usr /var /etc/default /usr/local /var/www 2>/dev/null || true
+    cp -a /tmp/overlay/* / 2>/dev/null || true
+    # cp -a 保留构建主机的 UID/GID（kent:kent），只修正 overlay 涉及的目录
     chown -R root:root /etc/hive /etc/xray /etc/frp /etc/cloudflared /etc/mihomo \
-        /etc/default /etc/sysusers.d \
+        /etc/sysusers.d \
         /etc/systemd/system /etc/nginx /etc/update-motd.d \
-        /usr/local/bin /var/www/hive 2>/dev/null || true
+        /usr/local/bin 2>/dev/null || true
     chmod +x /etc/update-motd.d/* 2>/dev/null || true
     echo ">>> Overlay files copied to root directory"
 else
